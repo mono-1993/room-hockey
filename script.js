@@ -23,6 +23,7 @@ const ARENA = { width: 800, height: 1200 };
 const MAX_PLAYERS = 6;
 const keys = new Set();
 const input = { x: 0, y: 0, power: false };
+const targetInput = { x: 0, y: 0 };
 
 let ws = null;
 let roomId = "";
@@ -361,9 +362,13 @@ function updateKeyboardInput() {
   if (keys.has("ArrowDown") || keys.has("KeyS")) y += 1;
   if (!touchOrigin) {
     const length = Math.hypot(x, y) || 1;
-    input.x = x / length;
-    input.y = y / length;
+    targetInput.x = x / length;
+    targetInput.y = y / length;
   }
+  input.x += (targetInput.x - input.x) * 0.48;
+  input.y += (targetInput.y - input.y) * 0.48;
+  if (Math.abs(input.x) < 0.015) input.x = 0;
+  if (Math.abs(input.y) < 0.015) input.y = 0;
   send({ type: "input", input: inputForServer() });
   input.power = false;
 }
@@ -371,19 +376,23 @@ function updateKeyboardInput() {
 function setTouchInput(clientX, clientY) {
   const dx = clientX - touchOrigin.x;
   const dy = clientY - touchOrigin.y;
-  const limit = 54;
-  const length = Math.min(limit, Math.hypot(dx, dy));
+  const rect = touchPad.getBoundingClientRect();
+  const limit = Math.max(74, Math.min(rect.width, rect.height) * 0.38);
+  const deadZone = 8;
+  const rawLength = Math.hypot(dx, dy);
+  const length = Math.min(limit, Math.max(0, rawLength - deadZone));
   const angle = Math.atan2(dy, dx);
-  input.x = Math.cos(angle) * (length / limit);
-  input.y = Math.sin(angle) * (length / limit);
-  stick.style.transform = `translate(calc(-50% + ${input.x * 44}px), calc(-50% + ${input.y * 44}px))`;
+  const amount = Math.pow(length / limit, 0.72);
+  targetInput.x = Math.cos(angle) * amount;
+  targetInput.y = Math.sin(angle) * amount;
+  stick.style.transform = `translate(calc(-50% + ${targetInput.x * 58}px), calc(-50% + ${targetInput.y * 58}px))`;
 }
 
 function clearTouchInput() {
   touchOrigin = null;
   touchId = null;
-  input.x = 0;
-  input.y = 0;
+  targetInput.x = 0;
+  targetInput.y = 0;
   stick.style.transform = "translate(-50%, -50%)";
 }
 
@@ -442,5 +451,5 @@ window.addEventListener("resize", resize);
 initRoom();
 resize();
 connect();
-setInterval(updateKeyboardInput, 1000 / 45);
+setInterval(updateKeyboardInput, 1000 / 60);
 requestAnimationFrame(draw);

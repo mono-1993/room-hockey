@@ -8,7 +8,7 @@ const crypto = require("crypto");
 const root = __dirname;
 const port = Number(process.env.PORT || 8080);
 const MAX_PLAYERS = 6;
-const PLAYER_SPEED = 760;
+const PLAYER_SPEED = 900;
 const CPU_BASE_SPEED = 660;
 const BALL_START_SPEED = 360;
 const BALL_MIN_SPEED = 360;
@@ -480,7 +480,7 @@ setInterval(() => {
       broadcast(room);
     }
   });
-}, 1000 / 45);
+}, 1000 / 60);
 
 server.listen(port, () => {
   console.log(`Room Hockey running on http://localhost:${port}`);

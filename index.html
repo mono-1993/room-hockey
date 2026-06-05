@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Room Hockey</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main id="app">
+    <section id="lobby" class="panel">
+      <h1>Room Hockey</h1>
+      <p>ルームURLを共有して、1〜6人で同じ試合に参加できます。</p>
+
+      <label class="name-field">
+        名前
+        <input id="nameInput" maxlength="12" autocomplete="off">
+      </label>
+
+      <div class="room-box">
+        <span>Room URL</span>
+        <input id="roomUrl" readonly>
+        <button id="copyButton" type="button">コピー</button>
+      </div>
+
+      <div class="cpu-box">
+        <div>
+          <strong>CPU</strong>
+          <span>人間とCPUの合計は最大6人</span>
+        </div>
+        <div class="cpu-stepper">
+          <button id="cpuMinus" type="button" aria-label="CPUを減らす">-</button>
+          <input id="cpuCount" type="number" min="0" max="5" value="0" inputmode="numeric">
+          <button id="cpuPlus" type="button" aria-label="CPUを増やす">+</button>
+        </div>
+      </div>
+
+      <div id="status" class="status">接続準備中...</div>
+      <div id="players" class="players"></div>
+      <button id="startButton" type="button" class="primary">参加して開始</button>
+    </section>
+
+    <section id="game" class="game hidden">
+      <canvas id="gameCanvas"></canvas>
+      <div id="hud" class="hud"></div>
+      <div id="touchPad" class="touch-pad">
+        <div id="stick" class="stick"></div>
+      </div>
+      <button id="powerButton" class="power-button" type="button">POWER</button>
+      <button id="leaveButton" class="leave-button" type="button">退出</button>
+    </section>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>

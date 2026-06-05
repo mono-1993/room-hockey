@@ -8,13 +8,14 @@ const crypto = require("crypto");
 const root = __dirname;
 const port = Number(process.env.PORT || 8080);
 const MAX_PLAYERS = 6;
-const playerMaxSpeed = 520;
-const playerAcceleration = 3600;
-const playerFriction = 0.82;
+const playerMaxSpeed = 640;
+const playerAcceleration = 5600;
+const playerFriction = 0.68;
 const CPU_BASE_SPEED = 660;
 const BALL_START_SPEED = 360;
 const BALL_MIN_SPEED = 360;
 const BALL_MAX_SPEED = 980;
+const SPAWN_ZONE = { minX: 180, maxX: 620, y: 600 };
 const rooms = new Map();
 const sockets = new Map();
 const types = {
@@ -252,9 +253,10 @@ function setCpuCount(room, requested) {
 function makeBall(speed) {
   const launchSpeed = speed || BALL_START_SPEED;
   const angle = Math.random() * Math.PI * 2;
+  const spawnX = SPAWN_ZONE.minX + Math.random() * (SPAWN_ZONE.maxX - SPAWN_ZONE.minX);
   return {
-    x: 400,
-    y: 600,
+    x: spawnX,
+    y: SPAWN_ZONE.y,
     vx: Math.cos(angle) * launchSpeed,
     vy: Math.sin(angle) * launchSpeed,
     r: 18,
@@ -312,6 +314,7 @@ function tickRoom(room, dt) {
     player.y += player.vy * dt;
     player.x = clamp(player.x, player.r, 800 - player.r);
     player.y = clamp(player.y, player.team === 0 ? 600 + player.r : player.r, player.team === 0 ? 1200 - player.r : 600 - player.r);
+    keepOutOfSpawnZone(player);
   });
 
   room.balls.forEach((ball) => {
@@ -407,12 +410,13 @@ function collidePaddle(room, ball, player) {
   if (isNewPlayerHit) {
     pushEvent(room, { kind: power ? "power" : "hit", x: ball.x, y: ball.y, team: player.team });
     room.rally += 1 / Math.max(1, room.balls.length);
-    if (room.rally >= room.nextBallRally && room.balls.length < room.maxBalls) {
-      room.balls.push(makeBall(BALL_START_SPEED + room.balls.length * 40));
-      room.nextBallRally += 15;
-      pushEvent(room, { kind: "addBall", x: 400, y: 600, team: player.team });
-    }
+  if (room.rally >= room.nextBallRally && room.balls.length < room.maxBalls) {
+    const newBall = makeBall(BALL_START_SPEED + room.balls.length * 40);
+    room.balls.push(newBall);
+    room.nextBallRally += 15;
+    pushEvent(room, { kind: "addBall", x: newBall.x, y: newBall.y, team: player.team });
   }
+}
 }
 
 function score(room, defendingTeam, ball) {
@@ -486,6 +490,25 @@ function broadcast(room) {
 
 function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value));
+}
+
+function keepOutOfSpawnZone(player) {
+  const dx = player.x - SPAWN_ZONE.x;
+  const dy = player.y - SPAWN_ZONE.y;
+  const distance = Math.hypot(dx, dy) || 1;
+  const minDistance = SPAWN_ZONE.r + player.r;
+  if (distance >= minDistance) return;
+  const nx = dx / distance;
+  const ny = dy / distance;
+  player.x = SPAWN_ZONE.x + nx * minDistance;
+  player.y = SPAWN_ZONE.y + ny * minDistance;
+  player.x = clamp(player.x, player.r, 800 - player.r);
+  player.y = clamp(player.y, player.team === 0 ? 600 + player.r : player.r, player.team === 0 ? 1200 - player.r : 600 - player.r);
+  const pushingIntoZone = (player.vx || 0) * nx + (player.vy || 0) * ny < 0;
+  if (pushingIntoZone) {
+    player.vx *= 0.25;
+    player.vy *= 0.25;
+  }
 }
 
 function approach(value, target, amount) {

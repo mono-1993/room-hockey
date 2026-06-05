@@ -20,9 +20,10 @@ const stick = document.getElementById("stick");
 const powerButton = document.getElementById("powerButton");
 
 const ARENA = { width: 800, height: 1200 };
+const SPAWN_ZONE = { x: 400, y: 600, r: 92 };
 const MAX_PLAYERS = 6;
-const joystickDeadZone = 8;
-const joystickMaxDistance = 70;
+const joystickDeadZone = 4;
+const joystickMaxDistance = 54;
 const keys = new Set();
 const input = { x: 0, y: 0, power: false };
 const targetInput = { x: 0, y: 0 };
@@ -212,6 +213,7 @@ function draw() {
 
   drawGoal(v, 0);
   drawGoal(v, 1);
+  drawSpawnZone(v);
 
   if (snapshot) {
     snapshot.balls.forEach((ball) => drawBall(ball, v));
@@ -235,6 +237,28 @@ function drawGoal(v, team) {
   ctx.moveTo(v.x + v.w / 2 - half, y);
   ctx.lineTo(v.x + v.w / 2 + half, y);
   ctx.stroke();
+}
+
+function drawSpawnZone(v) {
+  const x = sx(SPAWN_ZONE.x, v);
+  const y = sy(SPAWN_ZONE.y, v);
+  const r = sr(SPAWN_ZONE.r, v);
+  ctx.fillStyle = "rgba(98, 200, 255, 0.08)";
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = "rgba(98, 200, 255, 0.38)";
+  ctx.lineWidth = 2;
+  ctx.setLineDash([8, 8]);
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = "rgba(255,255,255,0.55)";
+  ctx.font = `700 ${Math.max(10, sr(16, v))}px system-ui`;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText("SPAWN", x, y);
 }
 
 function drawPlayer(player, v) {
@@ -367,7 +391,7 @@ function updateKeyboardInput() {
     targetInput.x = x / length;
     targetInput.y = y / length;
   }
-  const blend = touchOrigin ? 0.86 : 0.68;
+  const blend = touchOrigin ? 0.96 : 0.8;
   input.x += (targetInput.x - input.x) * blend;
   input.y += (targetInput.y - input.y) * blend;
   if (Math.abs(input.x) < 0.015) input.x = 0;
@@ -377,15 +401,27 @@ function updateKeyboardInput() {
 }
 
 function setTouchInput(clientX, clientY) {
-  const dx = clientX - touchOrigin.x;
-  const dy = clientY - touchOrigin.y;
+  let dx = clientX - touchOrigin.x;
+  let dy = clientY - touchOrigin.y;
   const rawLength = Math.hypot(dx, dy);
-  const length = Math.min(joystickMaxDistance, Math.max(0, rawLength - joystickDeadZone));
+  if (rawLength > joystickMaxDistance) {
+    const excess = rawLength - joystickMaxDistance;
+    const nx = dx / rawLength;
+    const ny = dy / rawLength;
+    touchOrigin.x += nx * excess;
+    touchOrigin.y += ny * excess;
+    touchPad.style.left = `${touchOrigin.x}px`;
+    touchPad.style.top = `${touchOrigin.y}px`;
+    dx = clientX - touchOrigin.x;
+    dy = clientY - touchOrigin.y;
+  }
+  const adjustedLength = Math.hypot(dx, dy);
+  const length = Math.min(joystickMaxDistance, Math.max(0, adjustedLength - joystickDeadZone));
   const angle = Math.atan2(dy, dx);
-  const amount = Math.pow(length / joystickMaxDistance, 0.82);
+  const amount = Math.pow(length / joystickMaxDistance, 0.62);
   targetInput.x = Math.cos(angle) * amount;
   targetInput.y = Math.sin(angle) * amount;
-  const stickDistance = Math.min(joystickMaxDistance, rawLength);
+  const stickDistance = Math.min(joystickMaxDistance, adjustedLength);
   const stickX = Math.cos(angle) * stickDistance;
   const stickY = Math.sin(angle) * stickDistance;
   stick.style.transform = `translate(calc(-50% + ${stickX}px), calc(-50% + ${stickY}px))`;
@@ -396,6 +432,8 @@ function clearTouchInput() {
   touchId = null;
   targetInput.x = 0;
   targetInput.y = 0;
+  input.x *= 0.25;
+  input.y *= 0.25;
   touchPad.classList.remove("active");
   stick.style.transform = "translate(-50%, -50%)";
 }
@@ -425,6 +463,7 @@ powerButton.addEventListener("pointerdown", () => {
 
 function startJoystick(event) {
   if (!joined || event.target.closest("button")) return;
+  event.preventDefault();
   touchId = event.pointerId;
   game.setPointerCapture(touchId);
   touchOrigin = { x: event.clientX, y: event.clientY };
@@ -436,6 +475,7 @@ function startJoystick(event) {
 
 function moveJoystick(event) {
   if (event.pointerId !== touchId || !touchOrigin) return;
+  event.preventDefault();
   setTouchInput(event.clientX, event.clientY);
 }
 

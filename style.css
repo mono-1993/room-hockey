@@ -282,6 +282,24 @@ input {
   .cpu-box {
     grid-template-columns: 1fr;
   }
+
+  .touch-pad {
+    width: 118px;
+    height: 118px;
+  }
+
+  .stick {
+    width: 42px;
+    height: 42px;
+  }
+
+  .power-button {
+    right: max(12px, env(safe-area-inset-right));
+    bottom: max(16px, env(safe-area-inset-bottom));
+    width: min(24vw, 88px);
+    min-width: 74px;
+    font-size: 12px;
+  }
 }
 
 .hidden {

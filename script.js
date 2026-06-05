@@ -461,16 +461,24 @@ powerButton.addEventListener("pointerdown", () => {
   send({ type: "input", input: inputForServer() });
 });
 
+function beginJoystick(clientX, clientY, id = "touch") {
+  touchId = id;
+  touchOrigin = { x: clientX, y: clientY };
+  touchPad.style.left = `${clientX}px`;
+  touchPad.style.top = `${clientY}px`;
+  touchPad.classList.add("active");
+  setTouchInput(clientX, clientY);
+}
+
 function startJoystick(event) {
   if (!joined || event.target.closest("button")) return;
   event.preventDefault();
-  touchId = event.pointerId;
-  game.setPointerCapture(touchId);
-  touchOrigin = { x: event.clientX, y: event.clientY };
-  touchPad.style.left = `${event.clientX}px`;
-  touchPad.style.top = `${event.clientY}px`;
-  touchPad.classList.add("active");
-  setTouchInput(event.clientX, event.clientY);
+  beginJoystick(event.clientX, event.clientY, event.pointerId);
+  try {
+    event.currentTarget.setPointerCapture(event.pointerId);
+  } catch {
+    // Some mobile browsers refuse capture on bubbled pointer events; window listeners below keep input alive.
+  }
 }
 
 function moveJoystick(event) {
@@ -479,10 +487,34 @@ function moveJoystick(event) {
   setTouchInput(event.clientX, event.clientY);
 }
 
+function startTouchJoystick(event) {
+  if (!joined || event.target.closest("button") || event.touches.length === 0) return;
+  event.preventDefault();
+  const touch = event.changedTouches[0];
+  beginJoystick(touch.clientX, touch.clientY, touch.identifier);
+}
+
+function moveTouchJoystick(event) {
+  if (!touchOrigin) return;
+  const touch = [...event.changedTouches].find((item) => item.identifier === touchId);
+  if (!touch) return;
+  event.preventDefault();
+  setTouchInput(touch.clientX, touch.clientY);
+}
+
+function endTouchJoystick(event) {
+  const touch = [...event.changedTouches].find((item) => item.identifier === touchId);
+  if (touch) clearTouchInput();
+}
+
 game.addEventListener("pointerdown", startJoystick);
-game.addEventListener("pointermove", moveJoystick);
-game.addEventListener("pointerup", clearTouchInput);
-game.addEventListener("pointercancel", clearTouchInput);
+window.addEventListener("pointermove", moveJoystick, { passive: false });
+window.addEventListener("pointerup", clearTouchInput);
+window.addEventListener("pointercancel", clearTouchInput);
+game.addEventListener("touchstart", startTouchJoystick, { passive: false });
+window.addEventListener("touchmove", moveTouchJoystick, { passive: false });
+window.addEventListener("touchend", endTouchJoystick);
+window.addEventListener("touchcancel", endTouchJoystick);
 
 window.addEventListener("keydown", (event) => {
   keys.add(event.code);

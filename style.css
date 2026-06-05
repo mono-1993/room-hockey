@@ -189,10 +189,13 @@ input {
   inset: 0;
   width: 100%;
   height: 100%;
+  touch-action: none;
+  user-select: none;
 }
 
 #gameCanvas {
   display: block;
+  touch-action: none;
 }
 
 .hud {

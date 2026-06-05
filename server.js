@@ -314,7 +314,6 @@ function tickRoom(room, dt) {
     player.y += player.vy * dt;
     player.x = clamp(player.x, player.r, 800 - player.r);
     player.y = clamp(player.y, player.team === 0 ? 600 + player.r : player.r, player.team === 0 ? 1200 - player.r : 600 - player.r);
-    keepOutOfSpawnZone(player);
   });
 
   room.balls.forEach((ball) => {
@@ -490,25 +489,6 @@ function broadcast(room) {
 
 function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value));
-}
-
-function keepOutOfSpawnZone(player) {
-  const dx = player.x - SPAWN_ZONE.x;
-  const dy = player.y - SPAWN_ZONE.y;
-  const distance = Math.hypot(dx, dy) || 1;
-  const minDistance = SPAWN_ZONE.r + player.r;
-  if (distance >= minDistance) return;
-  const nx = dx / distance;
-  const ny = dy / distance;
-  player.x = SPAWN_ZONE.x + nx * minDistance;
-  player.y = SPAWN_ZONE.y + ny * minDistance;
-  player.x = clamp(player.x, player.r, 800 - player.r);
-  player.y = clamp(player.y, player.team === 0 ? 600 + player.r : player.r, player.team === 0 ? 1200 - player.r : 600 - player.r);
-  const pushingIntoZone = (player.vx || 0) * nx + (player.vy || 0) * ny < 0;
-  if (pushingIntoZone) {
-    player.vx *= 0.25;
-    player.vy *= 0.25;
-  }
 }
 
 function approach(value, target, amount) {

@@ -8,7 +8,9 @@ const crypto = require("crypto");
 const root = __dirname;
 const port = Number(process.env.PORT || 8080);
 const MAX_PLAYERS = 6;
-const PLAYER_SPEED = 900;
+const playerMaxSpeed = 520;
+const playerAcceleration = 3600;
+const playerFriction = 0.82;
 const CPU_BASE_SPEED = 660;
 const BALL_START_SPEED = 360;
 const BALL_MIN_SPEED = 360;
@@ -165,6 +167,8 @@ function joinRoom(socket, roomId, name, cpuCount) {
     cpu: false,
     cooldown: 0,
     powerWindow: 0,
+    vx: 0,
+    vy: 0,
     input: { x: 0, y: 0, power: false },
   };
   room.players.push(player);
@@ -231,6 +235,8 @@ function setCpuCount(room, requested) {
       cpu: true,
       cooldown: 0,
       powerWindow: 0,
+      vx: 0,
+      vy: 0,
       input: { x: 0, y: 0, power: false },
       aiTimer: 0,
       aiTarget: null,
@@ -288,9 +294,22 @@ function tickRoom(room, dt) {
     player.input.power = false;
     player.cooldown = Math.max(0, player.cooldown - dt);
     player.powerWindow = Math.max(0, player.powerWindow - dt);
-    const speed = player.cpu ? player.aiSpeed : PLAYER_SPEED;
-    player.x += player.input.x * speed * dt;
-    player.y += player.input.y * speed * dt;
+    const maxSpeed = player.cpu ? player.aiSpeed : playerMaxSpeed;
+    const desiredVx = player.input.x * maxSpeed;
+    const desiredVy = player.input.y * maxSpeed;
+    const inputAmount = Math.hypot(player.input.x, player.input.y);
+    if (inputAmount > 0.02) {
+      player.vx = approach(player.vx || 0, desiredVx, playerAcceleration * dt);
+      player.vy = approach(player.vy || 0, desiredVy, playerAcceleration * dt);
+    } else {
+      const friction = Math.pow(playerFriction, dt * 60);
+      player.vx = (player.vx || 0) * friction;
+      player.vy = (player.vy || 0) * friction;
+      if (Math.abs(player.vx) < 2) player.vx = 0;
+      if (Math.abs(player.vy) < 2) player.vy = 0;
+    }
+    player.x += player.vx * dt;
+    player.y += player.vy * dt;
     player.x = clamp(player.x, player.r, 800 - player.r);
     player.y = clamp(player.y, player.team === 0 ? 600 + player.r : player.r, player.team === 0 ? 1200 - player.r : 600 - player.r);
   });
@@ -467,6 +486,12 @@ function broadcast(room) {
 
 function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value));
+}
+
+function approach(value, target, amount) {
+  if (value < target) return Math.min(value + amount, target);
+  if (value > target) return Math.max(value - amount, target);
+  return target;
 }
 
 let last = Date.now();

@@ -21,6 +21,8 @@ const powerButton = document.getElementById("powerButton");
 
 const ARENA = { width: 800, height: 1200 };
 const MAX_PLAYERS = 6;
+const joystickDeadZone = 8;
+const joystickMaxDistance = 70;
 const keys = new Set();
 const input = { x: 0, y: 0, power: false };
 const targetInput = { x: 0, y: 0 };
@@ -365,8 +367,9 @@ function updateKeyboardInput() {
     targetInput.x = x / length;
     targetInput.y = y / length;
   }
-  input.x += (targetInput.x - input.x) * 0.48;
-  input.y += (targetInput.y - input.y) * 0.48;
+  const blend = touchOrigin ? 0.86 : 0.68;
+  input.x += (targetInput.x - input.x) * blend;
+  input.y += (targetInput.y - input.y) * blend;
   if (Math.abs(input.x) < 0.015) input.x = 0;
   if (Math.abs(input.y) < 0.015) input.y = 0;
   send({ type: "input", input: inputForServer() });
@@ -376,16 +379,16 @@ function updateKeyboardInput() {
 function setTouchInput(clientX, clientY) {
   const dx = clientX - touchOrigin.x;
   const dy = clientY - touchOrigin.y;
-  const rect = touchPad.getBoundingClientRect();
-  const limit = Math.max(74, Math.min(rect.width, rect.height) * 0.38);
-  const deadZone = 8;
   const rawLength = Math.hypot(dx, dy);
-  const length = Math.min(limit, Math.max(0, rawLength - deadZone));
+  const length = Math.min(joystickMaxDistance, Math.max(0, rawLength - joystickDeadZone));
   const angle = Math.atan2(dy, dx);
-  const amount = Math.pow(length / limit, 0.72);
+  const amount = Math.pow(length / joystickMaxDistance, 0.82);
   targetInput.x = Math.cos(angle) * amount;
   targetInput.y = Math.sin(angle) * amount;
-  stick.style.transform = `translate(calc(-50% + ${targetInput.x * 58}px), calc(-50% + ${targetInput.y * 58}px))`;
+  const stickDistance = Math.min(joystickMaxDistance, rawLength);
+  const stickX = Math.cos(angle) * stickDistance;
+  const stickY = Math.sin(angle) * stickDistance;
+  stick.style.transform = `translate(calc(-50% + ${stickX}px), calc(-50% + ${stickY}px))`;
 }
 
 function clearTouchInput() {
@@ -393,6 +396,7 @@ function clearTouchInput() {
   touchId = null;
   targetInput.x = 0;
   targetInput.y = 0;
+  touchPad.classList.remove("active");
   stick.style.transform = "translate(-50%, -50%)";
 }
 
@@ -419,20 +423,26 @@ powerButton.addEventListener("pointerdown", () => {
   send({ type: "input", input: inputForServer() });
 });
 
-touchPad.addEventListener("pointerdown", (event) => {
+function startJoystick(event) {
+  if (!joined || event.target.closest("button")) return;
   touchId = event.pointerId;
-  touchPad.setPointerCapture(touchId);
+  game.setPointerCapture(touchId);
   touchOrigin = { x: event.clientX, y: event.clientY };
+  touchPad.style.left = `${event.clientX}px`;
+  touchPad.style.top = `${event.clientY}px`;
+  touchPad.classList.add("active");
   setTouchInput(event.clientX, event.clientY);
-});
+}
 
-touchPad.addEventListener("pointermove", (event) => {
+function moveJoystick(event) {
   if (event.pointerId !== touchId || !touchOrigin) return;
   setTouchInput(event.clientX, event.clientY);
-});
+}
 
-touchPad.addEventListener("pointerup", clearTouchInput);
-touchPad.addEventListener("pointercancel", clearTouchInput);
+game.addEventListener("pointerdown", startJoystick);
+game.addEventListener("pointermove", moveJoystick);
+game.addEventListener("pointerup", clearTouchInput);
+game.addEventListener("pointercancel", clearTouchInput);
 
 window.addEventListener("keydown", (event) => {
   keys.add(event.code);

@@ -492,26 +492,93 @@ function drawItem(item, v) {
 function drawGameSet(v) {
   if (!snapshot?.gameOver) return;
   const color = snapshot.winner === 0 ? "#35d887" : "#ffbf42";
+  const subColor = snapshot.winner === 0 ? "#62c8ff" : "#ff7b6e";
   const team = snapshot.winner === 0 ? "A" : "B";
   const ready = snapshot.replayReady || 0;
   const total = snapshot.replayTotal || 0;
-  ctx.fillStyle = "rgba(4, 8, 12, 0.66)";
+  const time = performance.now() / 1000;
+  const cx = v.x + v.w / 2;
+  const cy = v.y + v.h * 0.48;
+  const cardW = v.w * 0.82;
+  const cardH = v.h * 0.28;
+  const pulse = 0.5 + Math.sin(time * 4) * 0.5;
+
+  ctx.fillStyle = "rgba(4, 8, 12, 0.72)";
   ctx.fillRect(v.x, v.y, v.w, v.h);
+
+  for (let i = 0; i < 34; i += 1) {
+    const seed = i * 97.13;
+    const drift = (time * (42 + (i % 5) * 8) + seed) % (v.h + 90);
+    const x = v.x + ((Math.sin(seed) * 0.5 + 0.5) * v.w);
+    const y = v.y - 45 + drift;
+    ctx.globalAlpha = 0.35 + (i % 3) * 0.12;
+    ctx.fillStyle = i % 2 === 0 ? color : subColor;
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(time * 2 + seed);
+    ctx.fillRect(-3, -8, 6, 16);
+    ctx.restore();
+  }
+  ctx.globalAlpha = 1;
+
+  const glow = ctx.createRadialGradient(cx, cy, 0, cx, cy, v.w * 0.62);
+  glow.addColorStop(0, `${color}55`);
+  glow.addColorStop(0.48, `${color}18`);
+  glow.addColorStop(1, `${color}00`);
+  ctx.fillStyle = glow;
+  ctx.beginPath();
+  ctx.arc(cx, cy, v.w * (0.36 + pulse * 0.04), 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = "rgba(11, 17, 23, 0.88)";
   ctx.strokeStyle = color;
-  ctx.lineWidth = 3;
-  ctx.strokeRect(v.x + v.w * 0.11, v.y + v.h * 0.37, v.w * 0.78, v.h * 0.2);
-  ctx.fillStyle = color;
-  ctx.font = `800 ${Math.max(24, v.w * 0.12)}px system-ui`;
+  ctx.lineWidth = 3 + pulse * 2;
+  roundRect(cx - cardW / 2, cy - cardH / 2, cardW, cardH, 14);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.strokeStyle = `${color}88`;
+  ctx.lineWidth = 2;
+  for (let i = 0; i < 3; i += 1) {
+    ctx.globalAlpha = 0.35 - i * 0.08;
+    ctx.beginPath();
+    ctx.arc(cx, cy, v.w * (0.17 + i * 0.075 + pulse * 0.03), 0, Math.PI * 2);
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+
+  ctx.fillStyle = "rgba(248,251,255,0.78)";
+  ctx.font = `900 ${Math.max(12, v.w * 0.04)}px system-ui`;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.fillText("GAME SET", v.x + v.w / 2, v.y + v.h * 0.45);
+  ctx.fillText("WINNER", cx, cy - cardH * 0.27);
+
+  ctx.fillStyle = color;
+  ctx.font = `900 ${Math.max(30, v.w * 0.14)}px system-ui`;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(`TEAM ${team}`, cx, cy - cardH * 0.02);
+
   ctx.fillStyle = "#f8fbff";
-  ctx.font = `700 ${Math.max(16, v.w * 0.055)}px system-ui`;
-  ctx.fillText(`Team ${team} Win`, v.x + v.w / 2, v.y + v.h * 0.52);
+  ctx.font = `800 ${Math.max(18, v.w * 0.06)}px system-ui`;
+  ctx.fillText("GAME SET", cx, cy + cardH * 0.24);
 
   ctx.font = `700 ${Math.max(13, v.w * 0.04)}px system-ui`;
   ctx.fillStyle = "rgba(248,251,255,0.9)";
-  ctx.fillText(`Replay Ready ${ready}/${total}`, v.x + v.w / 2, v.y + v.h * 0.59);
+  ctx.fillText(`Replay Ready ${ready}/${total}`, cx, cy + cardH * 0.58);
+}
+
+function roundRect(x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
 }
 
 function consumeEvents(events) {
@@ -742,6 +809,11 @@ boostButton.addEventListener("pointerdown", (event) => {
   }
   setBoost(true);
 });
+boostButton.addEventListener("touchstart", (event) => {
+  event.preventDefault();
+  event.stopPropagation();
+  setBoost(true);
+}, { passive: false });
 boostButton.addEventListener("pointerup", (event) => {
   event.preventDefault();
   event.stopPropagation();

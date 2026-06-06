@@ -67,8 +67,7 @@ button {
 .setting-card,
 .room-box,
 .cpu-box,
-.status,
-.players {
+.status {
   border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--panel);
@@ -218,8 +217,7 @@ input {
   cursor: default;
 }
 
-.status,
-.players {
+.status {
   padding: 12px;
 }
 
@@ -230,8 +228,11 @@ input {
 .players {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 8px;
-  min-height: 74px;
+  gap: 10px;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
 }
 
 .team-list {
@@ -239,7 +240,7 @@ input {
   gap: 8px;
   padding: 10px;
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.035);
+  background: rgba(255, 255, 255, 0.04);
 }
 
 .team-a-border {
@@ -418,8 +419,7 @@ input {
   .setting-card,
   .room-box,
   .cpu-box,
-  .status,
-  .players {
+  .status {
     padding: 9px;
   }
 
@@ -470,6 +470,11 @@ input {
   .cpu-teams,
   .players {
     grid-template-columns: 1fr;
+  }
+
+  .players {
+    gap: 8px;
+    padding: 0;
   }
 
   .touch-pad {

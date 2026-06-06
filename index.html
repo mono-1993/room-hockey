@@ -10,12 +10,27 @@
   <main id="app">
     <section id="lobby" class="panel">
       <h1>Room Hockey</h1>
-      <p>ルームURLを共有して、1〜6人で同じ試合に参加できます。</p>
+      <p>ルームURLを共有して、同じ試合に参加できます。</p>
 
       <label class="name-field">
         名前
         <input id="nameInput" maxlength="12" autocomplete="off">
       </label>
+
+      <div class="settings-grid">
+        <label class="setting-card">
+          ゲームセット
+          <input id="winScoreInput" type="number" min="1" max="99" value="20" inputmode="numeric">
+        </label>
+
+        <div class="setting-card">
+          参加チーム
+          <div class="team-picker">
+            <button id="teamAButton" type="button" class="team-choice active">Team A</button>
+            <button id="teamBButton" type="button" class="team-choice">Team B</button>
+          </div>
+        </div>
+      </div>
 
       <div class="room-box">
         <span>Room URL</span>
@@ -26,18 +41,30 @@
       <div class="cpu-box">
         <div>
           <strong>CPU</strong>
-          <span>人間とCPUの合計は最大6人</span>
+          <span>チームごとにCPU人数を選択できます。合計6人まで。</span>
         </div>
-        <div class="cpu-stepper">
-          <button id="cpuMinus" type="button" aria-label="CPUを減らす">-</button>
-          <input id="cpuCount" type="number" min="0" max="5" value="0" inputmode="numeric">
-          <button id="cpuPlus" type="button" aria-label="CPUを増やす">+</button>
+        <div class="cpu-teams">
+          <label class="cpu-stepper">
+            <span>Team A</span>
+            <button id="cpuAMinus" type="button" aria-label="Team A CPUを減らす">-</button>
+            <input id="cpuAInput" type="number" min="0" max="6" value="0" inputmode="numeric">
+            <button id="cpuAPlus" type="button" aria-label="Team A CPUを増やす">+</button>
+          </label>
+          <label class="cpu-stepper">
+            <span>Team B</span>
+            <button id="cpuBMinus" type="button" aria-label="Team B CPUを減らす">-</button>
+            <input id="cpuBInput" type="number" min="0" max="6" value="0" inputmode="numeric">
+            <button id="cpuBPlus" type="button" aria-label="Team B CPUを増やす">+</button>
+          </label>
         </div>
       </div>
 
       <div id="status" class="status">接続準備中...</div>
       <div id="players" class="players"></div>
-      <button id="startButton" type="button" class="primary">参加して開始</button>
+      <div class="action-row">
+        <button id="joinButton" type="button" class="secondary">参加</button>
+        <button id="startButton" type="button" class="primary" disabled>ゲーム開始</button>
+      </div>
     </section>
 
     <section id="game" class="game hidden">
@@ -47,6 +74,8 @@
         <div id="stick" class="stick"></div>
       </div>
       <button id="powerButton" class="power-button" type="button">POWER</button>
+      <button id="replayButton" class="replay-button hidden" type="button">もう一度遊ぶ</button>
+      <button id="rulesButton" class="rules-button hidden" type="button">ルール設定変更</button>
       <button id="leaveButton" class="leave-button" type="button">退出</button>
     </section>
   </main>

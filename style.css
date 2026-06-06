@@ -58,6 +58,7 @@ button {
 }
 
 .name-field,
+.setting-card,
 .room-box,
 .cpu-box,
 .status,
@@ -65,6 +66,48 @@ button {
   border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--panel);
+}
+
+.settings-grid {
+  display: grid;
+  grid-template-columns: minmax(120px, 0.65fr) 1fr;
+  gap: 12px;
+}
+
+.setting-card {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.team-picker,
+.action-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.team-choice,
+.secondary {
+  min-height: 44px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #222c35;
+  color: var(--text);
+  font-weight: 900;
+}
+
+.team-choice.active:first-child {
+  border-color: var(--a);
+  background: rgba(53, 216, 135, 0.2);
+}
+
+.team-choice.active:last-child {
+  border-color: var(--b);
+  background: rgba(255, 191, 66, 0.22);
 }
 
 .name-field {
@@ -103,6 +146,9 @@ input {
 .room-box button,
 .cpu-stepper button,
 .primary,
+.secondary,
+.replay-button,
+.rules-button,
 .leave-button {
   min-height: 44px;
   border: 1px solid var(--line);
@@ -114,7 +160,7 @@ input {
 
 .cpu-box {
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: 1fr;
   gap: 12px;
   align-items: center;
   padding: 12px;
@@ -130,10 +176,17 @@ input {
   font-size: 13px;
 }
 
+.cpu-teams {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
 .cpu-stepper {
   display: grid;
-  grid-template-columns: 44px 64px 44px;
+  grid-template-columns: 1fr 38px 54px 38px;
   gap: 8px;
+  align-items: center;
 }
 
 .cpu-stepper input {
@@ -147,6 +200,12 @@ input {
   color: #06100d;
 }
 
+.primary:disabled {
+  filter: grayscale(1);
+  opacity: 0.55;
+  cursor: default;
+}
+
 .status,
 .players {
   padding: 12px;
@@ -158,8 +217,30 @@ input {
 
 .players {
   display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 8px;
   min-height: 74px;
+}
+
+.team-list {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.team-a-border {
+  border: 1px solid rgba(53, 216, 135, 0.35);
+}
+
+.team-b-border {
+  border: 1px solid rgba(255, 191, 66, 0.35);
+}
+
+.empty-team {
+  color: var(--muted);
+  font-size: 13px;
 }
 
 .player-row {
@@ -267,6 +348,30 @@ input {
   opacity: 0.55;
 }
 
+.replay-button {
+  position: fixed;
+  left: 50%;
+  bottom: max(84px, calc(env(safe-area-inset-bottom) + 54px));
+  z-index: 3;
+  width: min(72vw, 260px);
+  min-height: 50px;
+  border: 0;
+  background: linear-gradient(135deg, var(--a), var(--blue));
+  color: #06100d;
+  transform: translateX(-50%);
+}
+
+.rules-button {
+  position: fixed;
+  left: 50%;
+  bottom: max(24px, env(safe-area-inset-bottom));
+  z-index: 3;
+  width: min(72vw, 260px);
+  min-height: 48px;
+  background: rgba(10, 15, 20, 0.88);
+  transform: translateX(-50%);
+}
+
 .leave-button {
   position: fixed;
   top: max(10px, env(safe-area-inset-top));
@@ -283,6 +388,12 @@ input {
 
 @media (max-width: 560px) {
   .cpu-box {
+    grid-template-columns: 1fr;
+  }
+
+  .settings-grid,
+  .cpu-teams,
+  .players {
     grid-template-columns: 1fr;
   }
 

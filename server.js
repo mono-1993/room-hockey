@@ -11,6 +11,8 @@ const MAX_PLAYERS = 6;
 const playerMaxSpeed = 640;
 const playerAcceleration = 5600;
 const playerFriction = 0.68;
+const BOOST_SPEED_MULTIPLIER = 1.55;
+const BOOST_ACCEL_MULTIPLIER = 1.35;
 const CPU_BASE_SPEED = 660;
 const BALL_START_SPEED = 360;
 const BALL_MIN_SPEED = 360;
@@ -171,7 +173,7 @@ function handleMessage(socket, message) {
     if (!player) return;
     player.input.x = clamp(Number(message.input?.x) || 0, -1, 1);
     player.input.y = clamp(Number(message.input?.y) || 0, -1, 1);
-    player.input.power = Boolean(message.input?.power);
+    player.input.boost = Boolean(message.input?.boost);
   }
 }
 
@@ -201,11 +203,9 @@ function joinRoom(socket, roomId, name, team) {
     y: team === 0 ? 960 : 240,
     r: 34,
     cpu: false,
-    cooldown: 0,
-    powerWindow: 0,
     vx: 0,
     vy: 0,
-    input: { x: 0, y: 0, power: false },
+    input: { x: 0, y: 0, boost: false },
     wideTimer: 0,
     strongTimer: 0,
     wideStacks: [],
@@ -307,11 +307,9 @@ function makeCpu(team, index) {
     y: team === 0 ? 960 : 240,
     r: 34,
     cpu: true,
-    cooldown: 0,
-    powerWindow: 0,
     vx: 0,
     vy: 0,
-    input: { x: 0, y: 0, power: false },
+    input: { x: 0, y: 0, boost: false },
     wideTimer: 0,
     strongTimer: 0,
     wideStacks: [],
@@ -369,15 +367,13 @@ function startGame(room) {
   room.events = [];
   room.eventSeq = 0;
   room.players.forEach((player) => {
-    player.cooldown = 0;
-    player.powerWindow = 0;
     player.wideTimer = 0;
     player.strongTimer = 0;
     player.wideStacks = [];
     player.strongStacks = [];
     player.vx = 0;
     player.vy = 0;
-    player.input = { x: 0, y: 0, power: false };
+    player.input = { x: 0, y: 0, boost: false };
     player.hasPlaced = false;
   });
   placePlayers(room);
@@ -399,15 +395,13 @@ function returnToConfig(room) {
   room.events = [];
   room.eventSeq = 0;
   room.players.forEach((player) => {
-    player.cooldown = 0;
-    player.powerWindow = 0;
     player.wideTimer = 0;
     player.strongTimer = 0;
     player.wideStacks = [];
     player.strongStacks = [];
     player.vx = 0;
     player.vy = 0;
-    player.input = { x: 0, y: 0, power: false };
+    player.input = { x: 0, y: 0, boost: false };
     player.hasPlaced = false;
   });
   placePlayers(room);
@@ -453,24 +447,19 @@ function tickRoom(room, dt) {
   }
   room.players.filter((player) => player.cpu).forEach((player) => updateCpu(room, player, dt));
   room.players.forEach((player) => {
-    if (player.input.power && player.cooldown <= 0) {
-      player.powerWindow = 0.28;
-      player.cooldown = 1.8;
-    }
-    player.input.power = false;
-    player.cooldown = Math.max(0, player.cooldown - dt);
-    player.powerWindow = Math.max(0, player.powerWindow - dt);
     player.wideStacks = tickStack(player.wideStacks, dt);
     player.strongStacks = tickStack(player.strongStacks, dt);
     player.wideTimer = maxStackTime(player.wideStacks);
     player.strongTimer = maxStackTime(player.strongStacks);
-    const maxSpeed = player.cpu ? player.aiSpeed : playerMaxSpeed;
+    const boost = !player.cpu && player.input.boost;
+    const maxSpeed = (player.cpu ? player.aiSpeed : playerMaxSpeed) * (boost ? BOOST_SPEED_MULTIPLIER : 1);
+    const acceleration = playerAcceleration * (boost ? BOOST_ACCEL_MULTIPLIER : 1);
     const desiredVx = player.input.x * maxSpeed;
     const desiredVy = player.input.y * maxSpeed;
     const inputAmount = Math.hypot(player.input.x, player.input.y);
     if (inputAmount > 0.02) {
-      player.vx = approach(player.vx || 0, desiredVx, playerAcceleration * dt);
-      player.vy = approach(player.vy || 0, desiredVy, playerAcceleration * dt);
+      player.vx = approach(player.vx || 0, desiredVx, acceleration * dt);
+      player.vy = approach(player.vy || 0, desiredVy, acceleration * dt);
     } else {
       const friction = Math.pow(playerFriction, dt * 60);
       player.vx = (player.vx || 0) * friction;
@@ -535,8 +524,7 @@ function updateCpu(room, player, dt) {
   const distance = Math.hypot(dx, dy) || 1;
   player.input.x = clamp((dx / distance) * Math.min(1, distance / 80), -1, 1);
   player.input.y = clamp((dy / distance) * Math.min(1, distance / 80), -1, 1);
-  const incoming = room.balls.some((ball) => Math.hypot(ball.x - player.x, ball.y - player.y) < 150);
-  player.input.power = incoming && player.cooldown <= 0 && Math.random() < 0.18;
+  player.input.boost = false;
 }
 
 function nearestItemForPlayer(room, player) {
@@ -638,11 +626,6 @@ function collidePaddle(room, ball, player) {
   }
   let speed = Math.max(BALL_MIN_SPEED, Math.hypot(ball.vx, ball.vy) + 24);
   let power = false;
-  if (player.powerWindow > 0) {
-    speed *= player.powerWindow > 0.16 ? 1.75 : 1.35;
-    player.powerWindow = 0;
-    power = true;
-  }
   if (player.strongTimer > 0) {
     const stacks = stackCount(player.strongStacks);
     speed *= 1.35 + Math.min(2, Math.max(0, stacks - 1)) * 0.18;
@@ -682,7 +665,7 @@ function score(room, defendingTeam, ball) {
     room.players.forEach((player) => {
       player.input.x = 0;
       player.input.y = 0;
-      player.input.power = false;
+      player.input.boost = false;
       player.vx = 0;
       player.vy = 0;
     });
@@ -826,7 +809,7 @@ function broadcast(room) {
       y: Math.round(player.y),
       r: Math.round(playerRadius(player)),
       cpu: Boolean(player.cpu),
-      cooldown: player.cooldown,
+      boost: Boolean(player.input.boost),
       wideTimer: player.wideTimer || 0,
       strongTimer: player.strongTimer || 0,
       wideStacks: stackCount(player.wideStacks),

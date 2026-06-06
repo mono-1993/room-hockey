@@ -24,7 +24,7 @@ const playersBox = document.getElementById("players");
 const hud = document.getElementById("hud");
 const touchPad = document.getElementById("touchPad");
 const stick = document.getElementById("stick");
-const powerButton = document.getElementById("powerButton");
+const boostButton = document.getElementById("boostButton");
 const replayButton = document.getElementById("replayButton");
 const rulesButton = document.getElementById("rulesButton");
 
@@ -33,7 +33,7 @@ const MAX_PLAYERS = 6;
 const joystickDeadZone = 4;
 const joystickMaxDistance = 54;
 const keys = new Set();
-const input = { x: 0, y: 0, power: false };
+const input = { x: 0, y: 0, boost: false };
 const targetInput = { x: 0, y: 0 };
 
 let ws = null;
@@ -210,9 +210,8 @@ function updateHud() {
     ${snapshot.gameOver ? `<div class="chip">GAME SET Team ${snapshot.winner === 0 ? "A" : "B"}</div>` : ""}
   `;
   const mePlayer = me || null;
-  const cooldown = mePlayer ? Math.max(0, mePlayer.cooldown) : 0;
-  powerButton.classList.toggle("cooldown", cooldown > 0);
-  powerButton.textContent = cooldown > 0 ? cooldown.toFixed(1) : "POWER";
+  boostButton.classList.toggle("active", Boolean(mePlayer?.boost));
+  boostButton.textContent = input.boost ? "加速中" : "加速";
   if (snapshot.gameOver) {
     const ready = snapshot.replayReady || 0;
     const total = snapshot.replayTotal || 0;
@@ -297,7 +296,7 @@ function inputForServer() {
   return {
     x: input.x,
     y: isFlipped() ? -input.y : input.y,
-    power: input.power,
+    boost: input.boost,
   };
 }
 
@@ -381,6 +380,15 @@ function drawPlayer(player, v) {
   const color = player.team === 0 ? "#35d887" : "#ffbf42";
   const wideStacks = player.wideStacks || (player.wideTimer > 0 ? 1 : 0);
   const strongStacks = player.strongStacks || (player.strongTimer > 0 ? 1 : 0);
+  if (player.boost) {
+    ctx.globalAlpha = 0.45 + Math.sin(performance.now() / 80) * 0.12;
+    ctx.strokeStyle = "#62c8ff";
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.arc(x, y, sr(player.r + 14, v), 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
   if (player.wideTimer > 0) {
     ctx.globalAlpha = Math.min(0.48, 0.22 + wideStacks * 0.08);
     ctx.fillStyle = color;
@@ -617,8 +625,8 @@ function updateKeyboardInput() {
   input.y += (targetInput.y - input.y) * blend;
   if (Math.abs(input.x) < 0.015) input.x = 0;
   if (Math.abs(input.y) < 0.015) input.y = 0;
+  input.boost = keys.has("Space") || input.boost;
   if (joined && snapshot?.started) send({ type: "input", input: inputForServer() });
-  input.power = false;
 }
 
 function setTouchInput(clientX, clientY) {
@@ -700,11 +708,45 @@ startButton.addEventListener("click", startGame);
 bindActionButton(replayButton, startGame);
 bindActionButton(rulesButton, openRuleSettings);
 leaveButton.addEventListener("click", () => location.href = location.pathname);
-powerButton.addEventListener("pointerdown", (event) => {
+
+function setBoost(active) {
+  input.boost = active;
+  boostButton.classList.toggle("active", active);
+  boostButton.textContent = active ? "加速中" : "加速";
+  send({ type: "input", input: inputForServer() });
+}
+
+boostButton.addEventListener("pointerdown", (event) => {
   event.preventDefault();
   event.stopPropagation();
-  input.power = true;
-  send({ type: "input", input: inputForServer() });
+  try {
+    boostButton.setPointerCapture(event.pointerId);
+  } catch {
+    // Some mobile browsers refuse capture on form controls; window listeners cover release.
+  }
+  setBoost(true);
+});
+boostButton.addEventListener("pointerup", (event) => {
+  event.preventDefault();
+  event.stopPropagation();
+  setBoost(false);
+});
+boostButton.addEventListener("pointercancel", () => setBoost(false));
+boostButton.addEventListener("touchend", (event) => {
+  event.preventDefault();
+  event.stopPropagation();
+  setBoost(false);
+}, { passive: false });
+boostButton.addEventListener("touchcancel", () => setBoost(false));
+window.addEventListener("pointerup", () => {
+  if (input.boost && !keys.has("Space")) setBoost(false);
+});
+window.addEventListener("touchend", () => {
+  if (input.boost && !keys.has("Space")) setBoost(false);
+});
+window.addEventListener("blur", () => {
+  keys.delete("Space");
+  setBoost(false);
 });
 
 function beginJoystick(clientX, clientY, id = "touch") {
@@ -766,12 +808,13 @@ window.addEventListener("keydown", (event) => {
   keys.add(event.code);
   if (event.code === "Space") {
     event.preventDefault();
-    input.power = true;
+    setBoost(true);
   }
 });
 
 window.addEventListener("keyup", (event) => {
   keys.delete(event.code);
+  if (event.code === "Space") setBoost(false);
 });
 
 window.addEventListener("resize", resize);

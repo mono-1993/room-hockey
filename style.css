@@ -346,7 +346,7 @@ input {
   transform: translate(-50%, -50%);
 }
 
-.power-button {
+.boost-button {
   position: fixed;
   right: max(18px, env(safe-area-inset-right));
   bottom: max(26px, env(safe-area-inset-bottom));
@@ -361,9 +361,10 @@ input {
   touch-action: manipulation;
 }
 
-.power-button.cooldown {
-  border-color: var(--line);
-  opacity: 0.55;
+.boost-button.active {
+  border-color: var(--blue);
+  background: rgba(98, 200, 255, 0.28);
+  box-shadow: 0 0 28px rgba(98, 200, 255, 0.45);
 }
 
 .replay-button {
@@ -494,7 +495,7 @@ input {
     height: 42px;
   }
 
-  .power-button {
+  .boost-button {
     right: max(12px, env(safe-area-inset-right));
     bottom: max(16px, env(safe-area-inset-bottom));
     width: min(24vw, 88px);

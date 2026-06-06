@@ -96,6 +96,12 @@ button {
   gap: 8px;
 }
 
+.action-row {
+  position: relative;
+  z-index: 1;
+  margin: 2px 0 6px;
+}
+
 .team-choice,
 .secondary {
   min-height: 44px;
@@ -424,6 +430,17 @@ input {
   .room-box button,
   .cpu-stepper button {
     min-height: 38px;
+  }
+
+  .action-row {
+    gap: 8px;
+    margin: 2px 0 8px;
+  }
+
+  .action-row .primary,
+  .action-row .secondary {
+    min-height: 42px;
+    font-size: 15px;
   }
 
   .room-box {

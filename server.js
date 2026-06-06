@@ -17,7 +17,7 @@ const CPU_BASE_SPEED = 660;
 const BALL_START_SPEED = 360;
 const BALL_MIN_SPEED = 360;
 const BALL_MAX_SPEED = 980;
-const DEFAULT_WIN_SCORE = 20;
+const DEFAULT_WIN_SCORE = 10;
 const ITEM_SPEED = 260;
 const ITEM_RADIUS = 20;
 const BALL_REWARD_INTERVAL = 72;
@@ -134,7 +134,7 @@ function handleMessage(socket, message) {
     joinRoom(
       socket,
       String(message.room || "main"),
-      String(message.name || "Player").slice(0, 12),
+      String(message.name || "P1").slice(0, 2),
       Number(message.team) === 1 ? 1 : 0,
     );
   }

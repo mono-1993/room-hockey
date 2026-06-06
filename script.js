@@ -49,6 +49,8 @@ let lastEventSeq = 0;
 const effects = [];
 const ballTrails = new Map();
 const configInputs = new Set([winScoreInput, cpuAInput, cpuBInput]);
+const DEFAULT_WIN_SCORE = 10;
+const MAX_NAME_LENGTH = 2;
 
 function randomRoom() {
   return Math.random().toString(36).slice(2, 8).toUpperCase();
@@ -61,7 +63,7 @@ function initRoom() {
   url.searchParams.set("room", roomId);
   history.replaceState(null, "", url);
   roomUrlInput.value = url.href;
-  nameInput.value = localStorage.getItem("roomHockeyName") || `Player${Math.floor(Math.random() * 90 + 10)}`;
+  nameInput.value = (localStorage.getItem("roomHockeyName") || `P${Math.floor(Math.random() * 9 + 1)}`).slice(0, MAX_NAME_LENGTH);
 }
 
 function connect() {
@@ -118,7 +120,7 @@ function clampNumber(value, min, max) {
 function readWinScore() {
   const value = Number(winScoreInput.value);
   if (Number.isFinite(value) && value > 0) return clampNumber(Math.floor(value), 1, 99);
-  return snapshot?.winScore || 20;
+  return snapshot?.winScore || DEFAULT_WIN_SCORE;
 }
 
 function commitWinScore() {
@@ -138,7 +140,8 @@ function sendConfig() {
 
 function joinRoom() {
   if (!connected || joined) return;
-  const name = nameInput.value.trim() || "Player";
+  const name = (nameInput.value.trim() || "P1").slice(0, MAX_NAME_LENGTH);
+  nameInput.value = name;
   localStorage.setItem("roomHockeyName", name);
   sendConfig();
   send({ type: "join", room: roomId, name, team: selectedTeam });
@@ -185,7 +188,7 @@ function updateScreenMode() {
 function syncConfigFromState() {
   if (!snapshot || snapshot.started) return;
   if (configInputs.has(document.activeElement)) return;
-  winScoreInput.value = snapshot.winScore || 20;
+  winScoreInput.value = snapshot.winScore || DEFAULT_WIN_SCORE;
   cpuAInput.value = snapshot.cpuTargets?.[0] || 0;
   cpuBInput.value = snapshot.cpuTargets?.[1] || 0;
 }
@@ -206,7 +209,7 @@ function updateHud() {
         <span>TEAM A</span>
         <strong>${snapshot.scores[0]}</strong>
       </div>
-      <div class="score-limit">${snapshot.winScore || 20}</div>
+      <div class="score-limit">${snapshot.winScore || DEFAULT_WIN_SCORE}</div>
       <div class="score-team score-b">
         <span>TEAM B</span>
         <strong>${snapshot.scores[1]}</strong>
@@ -435,7 +438,7 @@ function drawPlayer(player, v) {
   ctx.font = `700 ${Math.max(10, sr(15, v))}px system-ui`;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.fillText(player.name.slice(0, 4), x, y);
+  ctx.fillText(player.name.slice(0, MAX_NAME_LENGTH), x, y);
 }
 
 function drawBall(ball, index, v) {
@@ -703,6 +706,9 @@ teamAButton.addEventListener("click", () => {
 teamBButton.addEventListener("click", () => {
   selectedTeam = 1;
   updateTeamButtons();
+});
+nameInput.addEventListener("input", () => {
+  if (nameInput.value.length > MAX_NAME_LENGTH) nameInput.value = nameInput.value.slice(0, MAX_NAME_LENGTH);
 });
 winScoreInput.addEventListener("change", commitWinScore);
 winScoreInput.addEventListener("input", sendConfig);

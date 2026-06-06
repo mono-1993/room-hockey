@@ -201,12 +201,22 @@ function updateHud() {
   const team = me?.team === 0 ? "A" : "B";
   const goalTimer = me ? Math.ceil(snapshot.goalTimers?.[me.team] || 0) : 0;
   hud.innerHTML = `
-    <div class="chip">Room ${roomId}</div>
-    <div class="chip">Team A ${snapshot.scores[0]}/${snapshot.winScore || 20}</div>
-    <div class="chip">Team B ${snapshot.scores[1]}/${snapshot.winScore || 20}</div>
-    <div class="chip">You ${team}</div>
-    ${goalTimer > 0 ? `<div class="chip">Goal ${goalTimer}</div>` : ""}
-    <div class="chip">${snapshot.players.length}/${MAX_PLAYERS}</div>
+    <div class="scoreboard">
+      <div class="score-team score-a">
+        <span>TEAM A</span>
+        <strong>${snapshot.scores[0]}</strong>
+      </div>
+      <div class="score-limit">${snapshot.winScore || 20}</div>
+      <div class="score-team score-b">
+        <span>TEAM B</span>
+        <strong>${snapshot.scores[1]}</strong>
+      </div>
+    </div>
+    <div class="hud-row">
+      <div class="chip">You ${team}</div>
+      ${goalTimer > 0 ? `<div class="chip">Goal ${goalTimer}</div>` : ""}
+      <div class="chip">${snapshot.players.length}/${MAX_PLAYERS}</div>
+    </div>
     ${snapshot.gameOver ? `<div class="chip">GAME SET Team ${snapshot.winner === 0 ? "A" : "B"}</div>` : ""}
   `;
   const mePlayer = me || null;

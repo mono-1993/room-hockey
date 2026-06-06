@@ -204,7 +204,6 @@ function updateTeamButtons() {
 function updateHud() {
   if (!snapshot) return;
   const me = snapshot.players.find((player) => player.id === myId);
-  const team = me?.team === 0 ? "A" : "B";
   const goalTimer = me ? Math.ceil(snapshot.goalTimers?.[me.team] || 0) : 0;
   hud.innerHTML = `
     <div class="scoreboard">
@@ -218,11 +217,7 @@ function updateHud() {
         <strong>${snapshot.scores[1]}</strong>
       </div>
     </div>
-    <div class="hud-row">
-      <div class="chip">You ${team}</div>
-      ${goalTimer > 0 ? `<div class="chip">Goal ${goalTimer}</div>` : ""}
-      <div class="chip">${snapshot.players.length}/${MAX_PLAYERS}</div>
-    </div>
+    ${goalTimer > 0 ? `<div class="hud-row"><div class="chip">Goal ${goalTimer}</div></div>` : ""}
     ${snapshot.gameOver ? `<div class="chip">GAME SET Team ${snapshot.winner === 0 ? "A" : "B"}</div>` : ""}
   `;
   const mePlayer = me || null;

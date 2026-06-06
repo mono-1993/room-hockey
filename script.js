@@ -52,7 +52,7 @@ let lastEventSeq = 0;
 const effects = [];
 const ballTrails = new Map();
 const configInputs = new Set([winScoreInput, cpuAInput, cpuBInput]);
-const DEFAULT_WIN_SCORE = 10;
+const DEFAULT_WIN_SCORE = 5;
 const MAX_NAME_LENGTH = 2;
 
 function randomRoom() {

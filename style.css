@@ -24,6 +24,8 @@ body,
   color: var(--text);
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   touch-action: pan-y;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 button,
@@ -138,6 +140,7 @@ input {
   background: #0f151b;
   color: var(--text);
   padding: 9px 11px;
+  font-size: 16px;
 }
 
 .room-box {
@@ -347,6 +350,7 @@ input {
   position: fixed;
   right: max(18px, env(safe-area-inset-right));
   bottom: max(26px, env(safe-area-inset-bottom));
+  z-index: 4;
   width: min(34vw, 132px);
   aspect-ratio: 1;
   border: 2px solid var(--a);
@@ -354,6 +358,7 @@ input {
   background: rgba(53, 216, 135, 0.2);
   color: var(--text);
   font-weight: 900;
+  touch-action: manipulation;
 }
 
 .power-button.cooldown {
@@ -365,24 +370,26 @@ input {
   position: fixed;
   left: 50%;
   bottom: max(84px, calc(env(safe-area-inset-bottom) + 54px));
-  z-index: 3;
+  z-index: 5;
   width: min(72vw, 260px);
   min-height: 50px;
   border: 0;
   background: linear-gradient(135deg, var(--a), var(--blue));
   color: #06100d;
   transform: translateX(-50%);
+  touch-action: manipulation;
 }
 
 .rules-button {
   position: fixed;
   left: 50%;
   bottom: max(24px, env(safe-area-inset-bottom));
-  z-index: 3;
+  z-index: 5;
   width: min(72vw, 260px);
   min-height: 48px;
   background: rgba(10, 15, 20, 0.88);
   transform: translateX(-50%);
+  touch-action: manipulation;
 }
 
 .leave-button {

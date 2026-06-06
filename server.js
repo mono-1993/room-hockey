@@ -322,8 +322,9 @@ function makeCpu(team, index) {
     aiLane: Math.random(),
     aiPhase: Math.random() * Math.PI * 2,
     aiBallOffset: Math.floor(Math.random() * 3),
-    aiItemInterest: 0.35 + Math.random() * 0.35,
+    aiItemInterest: 0.55 + Math.random() * 0.3,
     aiItemCooldown: 0,
+    aiDepthBias: Math.random() * 140 - 70,
     aiSpeed: CPU_BASE_SPEED + Math.random() * 180,
   };
 }
@@ -508,22 +509,23 @@ function updateCpu(room, player, dt) {
   if (player.aiTimer <= 0 || !player.aiTarget) {
     const item = nearestItemForPlayer(room, player);
     if (item) {
-      player.aiItemCooldown = 0.7 + Math.random() * 0.8;
       player.aiTarget = {
         x: clamp(item.x + player.aiBias * 0.35, player.r, 800 - player.r),
         y: player.team === 0 ? 600 + player.r + 18 : 600 - player.r - 18,
       };
-      player.aiTimer = 0.16 + Math.random() * 0.14;
+      player.aiTimer = 0.36 + Math.random() * 0.2;
     } else {
       const ball = nearestBallForTeam(room, player.team, player.aiBallOffset || 0);
       const homeY = player.team === 0 ? 980 : 220;
       const pressure = player.team === 0 ? clamp((ball.y - 600) / 600, 0, 1) : clamp((600 - ball.y) / 600, 0, 1);
       const laneX = 120 + (player.aiLane || 0.5) * 560;
       const weave = Math.sin(Date.now() / 520 + player.aiPhase) * 34;
+      const verticalWeave = Math.sin(Date.now() / 760 + player.aiPhase * 1.7) * 55;
       const chaseWeight = 0.42 + pressure * 0.45;
+      const guardDepth = (player.aiDepthBias || 0) + verticalWeave * (0.35 + pressure * 0.65);
       player.aiTarget = {
         x: clamp(laneX * (1 - chaseWeight) + (ball.x + player.aiBias + weave) * chaseWeight, player.r, 800 - player.r),
-        y: clamp(homeY + (ball.y - homeY) * pressure * 0.62, player.team === 0 ? 600 + player.r : player.r, player.team === 0 ? 1200 - player.r : 600 - player.r),
+        y: clamp(homeY + (ball.y - homeY) * pressure * 0.7 + guardDepth, player.team === 0 ? 600 + player.r : player.r, player.team === 0 ? 1200 - player.r : 600 - player.r),
       };
       player.aiTimer = 0.05 + Math.random() * 0.06;
     }
@@ -550,8 +552,9 @@ function nearestItemForPlayer(room, player) {
       best = item;
     }
   });
-  if (bestDistance > 430) return null;
-  if (Math.random() > (player.aiItemInterest || 0.45)) return null;
+  if (bestDistance > 560) return null;
+  const closeBonus = bestDistance < 260 ? 0.22 : 0;
+  if (Math.random() > Math.min(0.92, (player.aiItemInterest || 0.55) + closeBonus)) return null;
   return best;
 }
 
@@ -739,9 +742,13 @@ function collectItem(room, item, player) {
   const distance = Math.hypot(item.x - player.x, item.y - player.y);
   if (distance > item.r + playerRadius(player)) return;
   item.collected = true;
-  if (item.type === "wide") player.wideStacks.push(8);
-  if (item.type === "strong") player.strongStacks.push(8);
+  const mates = room.players.filter((mate) => mate.team === player.team);
+  if (item.type === "wide") mates.forEach((mate) => mate.wideStacks.push(8));
+  if (item.type === "strong") mates.forEach((mate) => mate.strongStacks.push(8));
   if (item.type === "goal") room.goalStacks[player.team].push(GOAL_SHIELD_DURATION);
+  room.players.filter((mate) => mate.cpu && mate.team === player.team).forEach((mate) => {
+    mate.aiItemCooldown = 1.2 + Math.random() * 0.8;
+  });
   pushEvent(room, { kind: "itemGet", itemType: item.type, x: player.x, y: player.y, team: player.team });
 }
 

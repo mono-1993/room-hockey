@@ -48,6 +48,7 @@ let touchId = null;
 let lastEventSeq = 0;
 const effects = [];
 const ballTrails = new Map();
+const configInputs = new Set([winScoreInput, cpuAInput, cpuBInput]);
 
 function randomRoom() {
   return Math.random().toString(36).slice(2, 8).toUpperCase();
@@ -110,11 +111,26 @@ function send(data) {
   ws.send(JSON.stringify(data));
 }
 
+function clampNumber(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function readWinScore() {
+  const value = Number(winScoreInput.value);
+  if (Number.isFinite(value) && value > 0) return clampNumber(Math.floor(value), 1, 99);
+  return snapshot?.winScore || 20;
+}
+
+function commitWinScore() {
+  winScoreInput.value = readWinScore();
+  sendConfig();
+}
+
 function sendConfig() {
   send({
     type: "setConfig",
     room: roomId,
-    winScore: Number(winScoreInput.value) || 20,
+    winScore: readWinScore(),
     cpuA: Number(cpuAInput.value) || 0,
     cpuB: Number(cpuBInput.value) || 0,
   });
@@ -137,6 +153,21 @@ function openRuleSettings() {
   send({ type: "configure", room: roomId });
 }
 
+function bindActionButton(button, action) {
+  let handledAt = 0;
+  const run = (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    const now = performance.now();
+    if (now - handledAt < 250) return;
+    handledAt = now;
+    action();
+  };
+  button.addEventListener("click", run);
+  button.addEventListener("pointerup", run);
+  button.addEventListener("touchend", run, { passive: false });
+}
+
 function updateScreenMode() {
   const playing = Boolean(snapshot?.started);
   lobby.classList.toggle("hidden", playing);
@@ -153,6 +184,7 @@ function updateScreenMode() {
 
 function syncConfigFromState() {
   if (!snapshot || snapshot.started) return;
+  if (configInputs.has(document.activeElement)) return;
   winScoreInput.value = snapshot.winScore || 20;
   cpuAInput.value = snapshot.cpuTargets?.[0] || 0;
   cpuBInput.value = snapshot.cpuTargets?.[1] || 0;
@@ -654,8 +686,9 @@ teamBButton.addEventListener("click", () => {
   selectedTeam = 1;
   updateTeamButtons();
 });
-winScoreInput.addEventListener("change", sendConfig);
+winScoreInput.addEventListener("change", commitWinScore);
 winScoreInput.addEventListener("input", sendConfig);
+winScoreInput.addEventListener("blur", commitWinScore);
 cpuAMinus.addEventListener("click", () => setCpu(0, Number(cpuAInput.value) - 1));
 cpuAPlus.addEventListener("click", () => setCpu(0, Number(cpuAInput.value) + 1));
 cpuBMinus.addEventListener("click", () => setCpu(1, Number(cpuBInput.value) - 1));
@@ -664,10 +697,12 @@ cpuAInput.addEventListener("input", () => setCpu(0, cpuAInput.value));
 cpuBInput.addEventListener("input", () => setCpu(1, cpuBInput.value));
 joinButton.addEventListener("click", joinRoom);
 startButton.addEventListener("click", startGame);
-replayButton.addEventListener("click", startGame);
-rulesButton.addEventListener("click", openRuleSettings);
+bindActionButton(replayButton, startGame);
+bindActionButton(rulesButton, openRuleSettings);
 leaveButton.addEventListener("click", () => location.href = location.pathname);
-powerButton.addEventListener("pointerdown", () => {
+powerButton.addEventListener("pointerdown", (event) => {
+  event.preventDefault();
+  event.stopPropagation();
   input.power = true;
   send({ type: "input", input: inputForServer() });
 });

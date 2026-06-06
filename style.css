@@ -69,10 +69,108 @@ button {
 .setting-card,
 .room-box,
 .cpu-box,
-.status {
+.status,
+.rules-info-panel {
   border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--panel);
+}
+
+.rules-info-button {
+  min-height: 40px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(98, 200, 255, 0.12);
+  color: var(--text);
+  font-weight: 900;
+}
+
+.rules-info-panel {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+}
+
+.rules-info-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.rules-info-head button {
+  width: 36px;
+  min-height: 34px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #222c35;
+  color: var(--text);
+  font-size: 18px;
+  font-weight: 900;
+}
+
+.rule-list {
+  display: grid;
+  gap: 8px;
+}
+
+.rule-item {
+  display: grid;
+  grid-template-columns: 40px 1fr;
+  gap: 10px;
+  align-items: center;
+  padding: 9px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.rule-item strong {
+  display: block;
+  margin-bottom: 2px;
+}
+
+.rule-item p {
+  margin: 0;
+  font-size: 12px;
+}
+
+.rule-icon {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 2px solid rgba(255, 255, 255, 0.72);
+  border-radius: 8px;
+  color: #07100d;
+  font-weight: 900;
+}
+
+.puck-icon {
+  border-radius: 50%;
+  background: #f8fbff;
+  box-shadow: 0 0 0 4px rgba(98, 200, 255, 0.2);
+}
+
+.boost-icon {
+  border-radius: 50%;
+  background: var(--blue);
+}
+
+.item-wide {
+  background: var(--a);
+}
+
+.item-strong {
+  background: #ff4d6d;
+}
+
+.item-goal {
+  background: var(--blue);
+}
+
+.add-ball {
+  border-radius: 50%;
+  background: #f8fbff;
 }
 
 .settings-grid {

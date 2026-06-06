@@ -12,6 +12,41 @@
       <h1>Room Hockey</h1>
       <p>ルームURLを共有して、同じ試合に参加できます。</p>
 
+      <button id="rulesInfoButton" class="rules-info-button" type="button">ルール説明</button>
+
+      <div id="rulesInfoPanel" class="rules-info-panel hidden">
+        <div class="rules-info-head">
+          <strong>ルール説明</strong>
+          <button id="rulesInfoClose" type="button" aria-label="閉じる">×</button>
+        </div>
+        <div class="rule-list">
+          <div class="rule-item">
+            <span class="rule-icon puck-icon"></span>
+            <div><strong>基本</strong><p>相手側のゴールへ弾を入れると得点。設定した点数に先に到達したチームの勝ちです。</p></div>
+          </div>
+          <div class="rule-item">
+            <span class="rule-icon boost-icon">速</span>
+            <div><strong>加速</strong><p>加速ボタンを押している間、パドルの移動が速くなります。PCではスペースキーでも加速できます。</p></div>
+          </div>
+          <div class="rule-item">
+            <span class="rule-icon item-wide">W</span>
+            <div><strong>ワイド</strong><p>一定時間、同じチーム全員のパドルが大きくなります。重ね取りで効果も重なります。</p></div>
+          </div>
+          <div class="rule-item">
+            <span class="rule-icon item-strong">S</span>
+            <div><strong>強化弾</strong><p>同じチーム全員が、次に打つ弾を強化できます。強化弾は壁に2回当たるまで強い状態です。</p></div>
+          </div>
+          <div class="rule-item">
+            <span class="rule-icon item-goal">G</span>
+            <div><strong>ゴール縮小</strong><p>一定時間、自チームのゴールが狭くなります。重ね取りでさらに守りやすくなります。</p></div>
+          </div>
+          <div class="rule-item">
+            <span class="rule-icon add-ball">+</span>
+            <div><strong>追加弾</strong><p>時間経過で弾が増えることがあります。増えた弾はゴール後も消えません。</p></div>
+          </div>
+        </div>
+      </div>
+
       <label class="name-field">
         名前
         <input id="nameInput" maxlength="2" autocomplete="off">

@@ -329,8 +329,8 @@ function makeCpu(team, index) {
 
 function makeBall(speed) {
   const launchSpeed = speed || BALL_START_SPEED;
-  const angle = Math.random() * Math.PI * 2;
   const spawnX = SPAWN_ZONE.minX + Math.random() * (SPAWN_ZONE.maxX - SPAWN_ZONE.minX);
+  const angle = safeLaunchAngle(spawnX);
   return {
     x: spawnX,
     y: SPAWN_ZONE.y,
@@ -344,6 +344,26 @@ function makeBall(speed) {
     strongOwner: "",
     strongTeam: null,
   };
+}
+
+function safeLaunchAngle(spawnX) {
+  for (let i = 0; i < 48; i += 1) {
+    const angle = Math.random() * Math.PI * 2;
+    if (!wouldLaunchIntoGoal(spawnX, angle)) return angle;
+  }
+  return Math.random() < 0.5 ? Math.PI * 0.18 : Math.PI * 0.82;
+}
+
+function wouldLaunchIntoGoal(spawnX, angle) {
+  const vx = Math.cos(angle);
+  const vy = Math.sin(angle);
+  if (Math.abs(vy) < 0.18) return false;
+  const targetY = vy < 0 ? 0 : 1200;
+  const time = (targetY - SPAWN_ZONE.y) / vy;
+  if (time <= 0) return false;
+  const goalMargin = GOAL_HALF_WIDTH + 70;
+  const projectedX = spawnX + vx * time;
+  return Math.abs(projectedX - 400) < goalMargin;
 }
 
 function resetBall(ball, speed) {

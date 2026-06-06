@@ -5,6 +5,9 @@ const game = document.getElementById("game");
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 const nameInput = document.getElementById("nameInput");
+const rulesInfoButton = document.getElementById("rulesInfoButton");
+const rulesInfoPanel = document.getElementById("rulesInfoPanel");
+const rulesInfoClose = document.getElementById("rulesInfoClose");
 const roomUrlInput = document.getElementById("roomUrl");
 const copyButton = document.getElementById("copyButton");
 const winScoreInput = document.getElementById("winScoreInput");
@@ -764,6 +767,13 @@ copyButton.addEventListener("click", async () => {
   await navigator.clipboard.writeText(roomUrlInput.value);
   copyButton.textContent = "コピー済み";
   setTimeout(() => { copyButton.textContent = "コピー"; }, 1000);
+});
+
+rulesInfoButton.addEventListener("click", () => {
+  rulesInfoPanel.classList.toggle("hidden");
+});
+rulesInfoClose.addEventListener("click", () => {
+  rulesInfoPanel.classList.add("hidden");
 });
 
 teamAButton.addEventListener("click", () => {

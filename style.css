@@ -650,6 +650,42 @@ input {
     padding: 0;
   }
 
+  .hud {
+    left: max(8px, env(safe-area-inset-left));
+    right: max(82px, calc(env(safe-area-inset-right) + 82px));
+    justify-items: stretch;
+  }
+
+  .scoreboard {
+    width: 100%;
+    min-height: 45px;
+    grid-template-columns: minmax(70px, 1fr) 34px minmax(70px, 1fr);
+  }
+
+  .score-team {
+    gap: 5px;
+    padding: 7px 8px;
+  }
+
+  .score-team span {
+    font-size: 9px;
+  }
+
+  .score-team strong {
+    font-size: 25px;
+  }
+
+  .score-limit {
+    min-width: 34px;
+    font-size: 11px;
+  }
+
+  .leave-button {
+    width: 66px;
+    min-height: 45px;
+    font-size: 15px;
+  }
+
   .touch-pad {
     width: 118px;
     height: 118px;
